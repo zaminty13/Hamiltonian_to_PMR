@@ -1,0 +1,171 @@
+import numpy as np
+
+
+def matrix_to_pmr(H, tolerance=1e-12):
+    """
+    Decompose H as:
+
+        H = sum_k D_k @ P_k
+
+    where:
+      - D_k is diagonal.
+      - P_k maps |s> to |s XOR k>.
+      - Terms whose diagonal coefficients are all smaller than
+        `tolerance` are omitted.
+
+    The dimension of H must be a power of two.
+
+    Returns:
+        pmr_terms: list of dictionaries containing:
+            {
+                "index": term index,
+                "flip_mask": XOR mask,
+                "diagonal": diagonal of D,
+                "D": diagonal matrix,
+                "P": permutation matrix
+            }
+    """
+    H = np.asarray(H, dtype=complex)
+
+    if H.ndim != 2 or H.shape[0] != H.shape[1]:
+        raise ValueError("H must be a square matrix.")
+
+    dim = H.shape[0]
+
+    if dim == 0 or dim & (dim - 1):
+        raise ValueError(
+            "The dimension of H must be a power of two."
+        )
+
+    states = np.arange(dim)
+    pmr_terms = []
+
+    for flip_mask in range(dim):
+        # For P|s> = |s XOR flip_mask>,
+        #
+        # (D @ P)[row, column] is nonzero when
+        # column = row XOR flip_mask.
+        diagonal = H[states, states ^ flip_mask].copy()
+
+        if np.all(np.abs(diagonal) <= tolerance):
+            continue
+
+        P = np.zeros((dim, dim), dtype=complex)
+        P[states ^ flip_mask, states] = 1.0
+
+        D = np.diag(diagonal)
+
+        pmr_terms.append(
+            {
+                "index": len(pmr_terms),
+                "flip_mask": flip_mask,
+                "diagonal": diagonal,
+                "D": D,
+                "P": P,
+            }
+        )
+
+    return pmr_terms
+
+
+def reconstruct_pmr(pmr_terms, dimension):
+    """Reconstruct H from its PMR terms."""
+    H_reconstructed = np.zeros(
+        (dimension, dimension), dtype=complex
+    )
+
+    for term in pmr_terms:
+        H_reconstructed += term["D"] @ term["P"]
+
+    return H_reconstructed
+
+
+def print_pmr(pmr_terms):
+    """Print the decomposition and its matrices."""
+    expression = " + ".join(
+        f"D{term['index']} @ P{term['index']}"
+        for term in pmr_terms
+    )
+
+    print("H =", expression if expression else "0")
+
+    for term in pmr_terms:
+        index = term["index"]
+        mask = term["flip_mask"]
+
+        print(f"\nTerm {index}, XOR flip mask = {mask}:")
+        print(f"D{index} =")
+        print(term["D"])
+        print(f"P{index} =")
+        print(term["P"])
+
+def read_matrix_from_terminal():
+    print("Enter the dimension of the square matrix.")
+    print("The dimension must be a power of two: 2, 4, 8, ...")
+
+    while True:
+        try:
+            dim = int(input("Dimension: "))
+
+            if dim <= 0 or dim & (dim - 1):
+                raise ValueError
+
+            break
+        except ValueError:
+            print("Please enter a positive power of two.")
+
+    print(f"\nEnter the {dim} rows of H.")
+    print("Separate entries with spaces.")
+    print("Complex numbers can use j, for example: 1+2j\n")
+
+    rows = []
+
+    for row_index in range(dim):
+        while True:
+            row_text = input(f"Row {row_index + 1}: ")
+
+            # Permit either spaces or commas between entries.
+            entries = row_text.replace(",", " ").split()
+
+            if len(entries) != dim:
+                print(f"Please enter exactly {dim} values.")
+                continue
+
+            try:
+                # Also permit i notation, such as 1+2i.
+                row = [
+                    complex(entry.lower().replace("i", "j"))
+                    for entry in entries
+                ]
+            except ValueError:
+                print("One or more entries are not valid numbers.")
+                continue
+
+            rows.append(row)
+            break
+
+    return np.array(rows, dtype=complex)
+
+
+if __name__ == "__main__":
+    H = read_matrix_from_terminal()
+
+    print("\nInput H =")
+    print(H)
+
+    pmr_terms = matrix_to_pmr(H)
+    print("\nPMR decomposition:")
+    print_pmr(pmr_terms)
+
+    H_reconstructed = reconstruct_pmr(
+        pmr_terms,
+        dimension=H.shape[0],
+    )
+
+    print("\nReconstructed H =")
+    print(H_reconstructed)
+
+    print(
+        "\nDecomposition is correct:",
+        np.allclose(H, H_reconstructed),
+    )
