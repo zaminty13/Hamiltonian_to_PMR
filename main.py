@@ -1,40 +1,35 @@
-from pmr.grouping import hamiltonian_to_pmr
-
-
-def print_pmr(groups):
-    print("\nPMR Representation")
-    print("------------------")
-
-    for P, diagonal_terms in groups.items():
-
-        print(f"\nP = {P}")
-        print("D =", end=" ")
-
-        first_term = True
-
-        for D, coefficient in diagonal_terms.items():
-
-            if coefficient == 0:
-                continue
-
-            if not first_term:
-                print(" + ", end="")
-
-            print(f"({coefficient}){D}", end="")
-
-            first_term = False
-
-        print()
-
+from pmr.converter import convert_to_pmr
+from pmr.verification import (
+    original_hamiltonian_matrix,
+    pmr_hamiltonian_matrix,
+    verify
+)
 
 hamiltonian = [
-    (2, "XI"),
-    (3, "XZ"),
-    (4, "YI"),
-    (5, "IZ")
+    (1.0, "XI"),
+    (0.5, "ZY"),
+    (-0.25, "IZ")
 ]
 
+pmr_terms = convert_to_pmr(hamiltonian)
 
-pmr = hamiltonian_to_pmr(hamiltonian)
+for i, (D, P) in enumerate(pmr_terms):
+    print(f"\nTerm {i + 1}")
 
-print_pmr(pmr)
+    print("\nD =")
+    print(D)
+
+    print("\nP =")
+    print(P)
+
+    print("\nD @ P =")
+    print(D @ P)
+
+print("\nOriginal Hamiltonian:")
+print(original_hamiltonian_matrix(hamiltonian))
+
+print("\nHamiltonian from PMR:")
+print(pmr_hamiltonian_matrix(pmr_terms))
+
+print("\nVerification:")
+print(verify(hamiltonian, pmr_terms))

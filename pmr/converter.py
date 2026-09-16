@@ -1,11 +1,14 @@
-from .permutation import get_permutation
-from .diagonal import get_diagonal
+from pmr.diagonal import diagonal_matrix
+from pmr.permutation import permutation_matrix
 
 
-def convert_term(coefficient, pauli_string):
-    P = get_permutation(pauli_string)
-    D, phase = get_diagonal(pauli_string)
+def convert_to_pmr(hamiltonian):
+    pmr_terms = []
 
-    diagonal_coefficient = coefficient * phase
+    for coefficient, pauli_string in hamiltonian:
+        D = diagonal_matrix(pauli_string, coefficient)
+        P = permutation_matrix(pauli_string)
 
-    return diagonal_coefficient, D, P
+        pmr_terms.append((D, P))
+
+    return pmr_terms

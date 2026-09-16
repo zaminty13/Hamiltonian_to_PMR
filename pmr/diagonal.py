@@ -1,18 +1,31 @@
-def get_diagonal(pauli_string):
-    D = ""
+import numpy as np
+
+I = np.array([
+    [1, 0],
+    [0, 1]
+], dtype=complex)
+
+Z = np.array([
+    [1, 0],
+    [0, -1]
+], dtype=complex)
+
+
+def diagonal_matrix(pauli_string, coefficient):
+    D = np.array([[1]], dtype=complex)
     phase = 1
 
     for pauli in pauli_string:
-        if pauli == "I":
-            D += "I"
-        elif pauli == "X":
-            D += "I"
+        if pauli in ("I", "X"):
+            local_D = I
         elif pauli == "Z":
-            D += "Z"
+            local_D = Z
         elif pauli == "Y":
-            D += "Z"
+            local_D = Z
             phase *= -1j
         else:
             raise ValueError(f"Invalid Pauli operator: {pauli}")
 
-    return D, phase
+        D = np.kron(D, local_D)
+
+    return coefficient * phase * D
