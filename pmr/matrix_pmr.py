@@ -3,16 +3,13 @@ import numpy as np
 
 def matrix_to_pmr(H, tolerance=1e-12):
     """
-    Decompose H as:
+    Decompose H as
 
         H = sum_k D_k @ P_k
 
-    where:
-      - D_k is diagonal.
-      - P_k maps |s> to |s XOR k>.
-      - Terms whose diagonal coefficients are all smaller than
-        tolerance are omitted.
+    where D_k is diagonal and P_k maps |s> to |s XOR k>.
 
+    Terms whose diagonal entries are all <= tolerance are omitted.
     The dimension of H must be a power of two.
     """
     H = np.asarray(H, dtype=complex)
@@ -31,72 +28,82 @@ def matrix_to_pmr(H, tolerance=1e-12):
     pmr_terms = []
 
     for flip_mask in range(dim):
+        diagonal = H[states, states ^ flip_mask]
 
-        diagonal = H[
-            states,
-            states ^ flip_mask
-        ].copy()
-
-        if np.all(np.abs(diagonal) <= tolerance):
-            continue
-
-        P = np.zeros((dim, dim), dtype=complex)
-
-        P[
-            states ^ flip_mask,
-            states
-        ] = 1.0
-
-        D = np.diag(diagonal)
-
-        pmr_terms.append(
-            {
-                "index": len(pmr_terms),
-                "flip_mask": flip_mask,
-                "diagonal": diagonal,
-                "D": D,
-                "P": P,
-            }
-        )
+        if np.abs(diagonal).max() > tolerance:
+            pmr_terms.append(
+                {
+                    "index": len(pmr_terms),
+                    "flip_mask": flip_mask,
+                    "diagonal": diagonal,
+                }
+            )
 
     return pmr_terms
 
 
 def reconstruct_pmr(pmr_terms, dimension):
     """Reconstruct H from its PMR terms."""
-
-    H_reconstructed = np.zeros(
+    H = np.zeros(
         (dimension, dimension),
         dtype=complex,
     )
 
-    for term in pmr_terms:
-        H_reconstructed += term["D"] @ term["P"]
+    states = np.arange(dimension)
 
-    return H_reconstructed
+    for term in pmr_terms:
+        H[
+            states,
+            states ^ term["flip_mask"]
+        ] += term["diagonal"]
+
+    return H
+
+
+def pmr_term_matrices(term):
+    """Construct dense D and P matrices for one PMR term."""
+    diagonal = term["diagonal"]
+    dim = diagonal.size
+    states = np.arange(dim)
+
+    P = np.zeros(
+        (dim, dim),
+        dtype=complex,
+    )
+
+    P[
+        states ^ term["flip_mask"],
+        states
+    ] = 1.0
+
+    D = np.diag(diagonal)
+
+    return D, P
 
 
 def print_pmr(pmr_terms):
     """Print the PMR decomposition."""
-
     expression = " + ".join(
         f"D{term['index']} @ P{term['index']}"
         for term in pmr_terms
     )
 
-    print("H =", expression if expression else "0")
+    print(
+        "H =",
+        expression if expression else "0",
+    )
 
     for term in pmr_terms:
-
         index = term["index"]
-        mask = term["flip_mask"]
+        D, P = pmr_term_matrices(term)
 
         print(
-            f"\nTerm {index}, XOR flip mask = {mask}:"
+            f"\nTerm {index}, "
+            f"XOR flip mask = {term['flip_mask']}:"
         )
 
         print(f"D{index} =")
-        print(term["D"])
+        print(D)
 
         print(f"P{index} =")
-        print(term["P"])
+        print(P)
