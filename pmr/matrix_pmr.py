@@ -2,16 +2,7 @@ import numpy as np
 
 
 def matrix_to_pmr(H, tolerance=1e-12):
-    """
-    Decompose H as
-
-        H = sum_k D_k @ P_k
-
-    where D_k is diagonal and P_k maps |s> to |s XOR k>.
-
-    Terms whose diagonal entries are all <= tolerance are omitted.
-    The dimension of H must be a power of two.
-    """
+   
     H = np.asarray(H, dtype=complex)
 
     if H.ndim != 2 or H.shape[0] != H.shape[1]:
@@ -21,7 +12,6 @@ def matrix_to_pmr(H, tolerance=1e-12):
 
     if dim == 0 or dim & (dim - 1):
         raise ValueError(
-            "The dimension of H must be a power of two."
         )
 
     states = np.arange(dim)
@@ -43,7 +33,6 @@ def matrix_to_pmr(H, tolerance=1e-12):
 
 
 def reconstruct_pmr(pmr_terms, dimension):
-    """Reconstruct H from its PMR terms."""
     H = np.zeros(
         (dimension, dimension),
         dtype=complex,
@@ -61,7 +50,6 @@ def reconstruct_pmr(pmr_terms, dimension):
 
 
 def pmr_term_matrices(term):
-    """Construct dense D and P matrices for one PMR term."""
     diagonal = term["diagonal"]
     dim = diagonal.size
     states = np.arange(dim)
@@ -82,7 +70,6 @@ def pmr_term_matrices(term):
 
 
 def print_pmr(pmr_terms):
-    """Print the PMR decomposition."""
     expression = " + ".join(
         f"D{term['index']} @ P{term['index']}"
         for term in pmr_terms
