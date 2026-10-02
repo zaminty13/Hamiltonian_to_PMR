@@ -12,7 +12,6 @@ _I_POWERS = (
 
 
 def validate_pauli_string(pauli):
-    """Validate a Pauli string."""
     pauli = pauli.upper().strip()
 
     if not pauli:
@@ -32,12 +31,6 @@ def validate_pauli_string(pauli):
 
 
 def _pauli_masks(pauli):
-    """
-    Return (x_mask, z_mask, num_y).
-
-    P|s> = i^num_y * (-1)^popcount(s & z_mask) * |s XOR x_mask>
-    The left-most character is the most significant bit (np.kron ordering).
-    """
     n = len(pauli)
 
     x_mask = 0
@@ -60,7 +53,6 @@ def _pauli_masks(pauli):
 
 
 def _parity(values):
-    """Return the parity of each integer."""
     values = np.array(
         values,
         dtype=np.int64,
@@ -76,7 +68,6 @@ def pauli_terms_to_pmr(
     pauli_terms,
     tolerance=1e-12,
 ):
-    """Convert Pauli terms directly into grouped PMR terms."""
     if not pauli_terms:
         raise ValueError(
             "At least one Pauli term is required."
@@ -154,7 +145,6 @@ def pauli_terms_to_pmr(
 
 
 def pauli_string_to_matrix(pauli):
-    """Convert a Pauli string into its dense matrix representation."""
     pauli = validate_pauli_string(pauli)
 
     pmr_terms = pauli_terms_to_pmr(
@@ -173,7 +163,6 @@ def pauli_string_to_matrix(pauli):
 def build_hamiltonian_from_paulis(
     pauli_terms,
 ):
-    """Build a dense Hamiltonian from Pauli terms."""
     if not pauli_terms:
         raise ValueError(
             "At least one Pauli term is required."
@@ -197,7 +186,6 @@ def build_hamiltonian_from_paulis(
 
 
 def read_pauli_terms_from_terminal():
-    """Read Pauli terms from the terminal."""
     while True:
         try:
             number_of_terms = int(
