@@ -23,13 +23,6 @@ _SINGLE_QUBIT_OPERATORS = {
 
 
 def apply_pauli_terms(pauli_terms, psi):
-    """
-    Compute H|psi> straight from the Pauli terms by applying the 2x2
-    matrices one qubit at a time.
-
-    This is independent of the PMR code and never builds a dense matrix,
-    so it makes a meaningful, cheap correctness check.
-    """
     num_qubits = len(pauli_terms[0][1])
     result = np.zeros_like(psi)
 
@@ -55,7 +48,6 @@ def apply_pauli_terms(pauli_terms, psi):
 
 
 def apply_pmr(pmr_terms, psi):
-    """Compute H|psi> from PMR terms: (H psi)[s] = sum_k D_k[s] * psi[s ^ k]."""
     states = np.arange(psi.size)
     result = np.zeros_like(psi)
 
